@@ -20,29 +20,32 @@ class ProcessSpeechUseCase @Inject constructor(
         val sourceLanguage = user.preferredLanguage
         
         return speechRepository.startStreamingTranscription(sourceLanguage)
-            .map { transcription ->
-                emit(ProcessingResult.Transcription(transcription))
+            .flatMapConcat { transcription -> 
+                flow {
+                    // Emit transcription result
+                    emit(ProcessingResult.Transcription(transcription))
                 
-                // Translate the text
-                val translatedText = speechRepository.translateText(
-                    text = transcription,
-                    sourceLanguage = sourceLanguage,
-                    targetLanguage = targetLanguage
-                )
-                emit(ProcessingResult.Translation(translatedText))
+                    // Translate the text
+                    val translatedText = speechRepository.translateText(
+                        text = transcription,
+                        sourceLanguage = sourceLanguage,
+                        targetLanguage = targetLanguage
+                    )
+                    emit(ProcessingResult.Translation(translatedText))
                 
-                // Retrieve voice embedding if available
-                val voiceEmbedding = user.voiceEmbeddingId?.let {
-                    voiceEmbeddingRepository.getEmbeddingById(it)
+                    // Retrieve voice embedding if available
+                    val voiceEmbedding = user.voiceEmbeddingId?.let {
+                        voiceEmbeddingRepository.getEmbeddingById(it)
+                    }
+                
+                    // Synthesize speech with the user's voice
+                    val audioBytes = speechRepository.synthesizeSpeech(
+                        text = translatedText,
+                        voiceEmbeddingId = voiceEmbedding?.id
+                    )
+                
+                    emit(ProcessingResult.SynthesizedSpeech(audioBytes))
                 }
-                
-                // Synthesize speech with the user's voice
-                val audioBytes = speechRepository.synthesizeSpeech(
-                    text = translatedText,
-                    voiceEmbeddingId = voiceEmbedding?.id
-                )
-                
-                ProcessingResult.SynthesizedSpeech(audioBytes)
             }
     }
     

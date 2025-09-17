@@ -35,6 +35,7 @@ class CallRepositoryImpl @Inject constructor(
     override suspend fun initializeWebRTC() = withContext(Dispatchers.IO) {
         webRTCClient.initialize()
         webRTCClient.createPeerConnection(iceServers)
+        // No need to return anything as per the interface
     }
 
     override suspend fun createCallOffer(initiator: User): SessionDescription = withContext(Dispatchers.IO) {

@@ -113,14 +113,13 @@ class TTSProcessor @Inject constructor(
         
         // Run inference
         synchronized(this) {
-            val inputs = mapOf(
-                "text_ids" to textBuffer,
-                "speaker_embedding" to embeddingBuffer
-            )
-            val outputs = mapOf(
-                "audio" to outputBuffer
-            )
-            interpreter?.runForMultipleInputsOutputs(inputs, outputs)
+            // Prepare input and output objects in the format TFLite expects
+            val inputArray = arrayOf(textBuffer, embeddingBuffer)
+            
+            val outputMap = HashMap<Int, Any>()
+            outputMap[0] = outputBuffer
+            
+            interpreter?.runForMultipleInputsOutputs(inputArray, outputMap)
         }
         
         // Process output to get audio data

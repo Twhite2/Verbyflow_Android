@@ -87,7 +87,13 @@ protobuf {
                 create("grpckt")
             }
             task.builtins {
-                create("kotlin")
+                // Generate both Java and Kotlin classes
+                create("java") {
+                    option("lite")
+                }
+                create("kotlin") {
+                    option("lite")
+                }
             }
         }
     }
@@ -109,6 +115,8 @@ dependencies {
     
     // WebRTC - using Infobip's version which is available in Maven Central
     implementation(libs.webrtc)
+    // Standard audio dependencies for WebRTC
+    implementation("androidx.media:media:1.7.0")
     // implementation(files("libs/libwebrtc.aar"))
     
     // Ktor
@@ -149,6 +157,15 @@ dependencies {
     implementation(libs.camerax.camera2)
     implementation(libs.camerax.lifecycle)
     implementation(libs.camerax.view)
+    
+    // Material icons (for KeyboardVoice, CallEnd, etc.)
+    implementation("androidx.compose.material:material-icons-extended:1.6.1")
+    
+    // Animation
+    implementation("androidx.compose.animation:animation:1.6.1")
+    
+    // Accompanist for permissions
+    implementation("com.google.accompanist:accompanist-permissions:0.30.1")
     
     // Testing
     testImplementation(libs.junit)

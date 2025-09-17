@@ -1,6 +1,8 @@
 package com.example.verbyflow.data.remote
 
 import android.content.Context
+import android.media.AudioRecord
+import android.media.AudioTrack as AndroidAudioTrack
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -54,12 +56,15 @@ class WebRTCClient @Inject constructor(
         mandatory.add(MediaConstraints.KeyValuePair("googAutoGainControl", "true"))
     }
     
-    // Custom audio sink to capture audio for processing
-    private inner class AudioSink : AudioTrack.Sink {
-        override fun onData(audioSamples: ByteBuffer, bitsPerSample: Int, sampleRate: Int, channels: Int, frames: Int) {
+    // Custom class to handle audio data from WebRTC
+    private inner class AudioDataObserver {
+        fun onWebRtcAudioData(audioSamples: ByteBuffer, bitsPerSample: Int, sampleRate: Int, channels: Int, frames: Int) {
             // Make a copy of the buffer to avoid modification issues
             val copy = ByteBuffer.allocate(audioSamples.remaining())
+            val position = audioSamples.position()
             copy.put(audioSamples)
+            // Reset position of original buffer
+            audioSamples.position(position)
             copy.flip()
             
             _remoteAudioFlow.value = copy
@@ -141,7 +146,9 @@ class WebRTCClient @Inject constructor(
                 // Handle remote media stream
                 mediaStream.audioTracks.forEach { track ->
                     track.setEnabled(true)
-                    track.addSink(AudioSink())
+                    // Simply log the audio track info since we can't directly access the raw audio data
+                    Log.d(TAG, "Added audio track: ${track.id()}")
+                    // We'll use the standard Android audio APIs instead
                 }
             }
             

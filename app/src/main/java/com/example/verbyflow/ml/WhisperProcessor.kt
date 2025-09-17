@@ -105,9 +105,13 @@ class WhisperProcessor @Inject constructor(
         
         // Run inference
         synchronized(this) {
-            val inputs = mapOf("audio" to inputBuffer, "language" to language)
-            val outputs = mapOf("text" to outputBuffer)
-            interpreter?.runForMultipleInputsOutputs(inputs, outputs)
+            // Prepare input and output objects in the format TFLite expects
+            val inputArray = arrayOf(inputBuffer)
+            
+            val outputMap = HashMap<Int, Any>()
+            outputMap[0] = outputBuffer
+            
+            interpreter?.runForMultipleInputsOutputs(inputArray, outputMap)
         }
         
         // Process the output to get the transcribed text

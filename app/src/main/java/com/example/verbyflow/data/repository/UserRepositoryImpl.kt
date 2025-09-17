@@ -29,7 +29,8 @@ class UserRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getCurrentUser(): User? {
-        return context.userDataStore.data.map { preferences ->
+        var currentUser: User? = null
+        context.userDataStore.data.map { preferences ->
             val userId = preferences[PreferencesKeys.USER_ID] ?: return@map null
             User(
                 id = userId,
@@ -39,10 +40,10 @@ class UserRepositoryImpl @Inject constructor(
                 isOnboarded = preferences[PreferencesKeys.IS_ONBOARDED] ?: false
             )
         }.collect { user -> 
-            return user
+            currentUser = user
         }
         
-        return null
+        return currentUser
     }
 
     override suspend fun saveUser(user: User) {

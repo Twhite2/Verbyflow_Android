@@ -170,8 +170,10 @@ class EcapaTdnnProcessor @Inject constructor(
                     if (read > 0) {
                         // Write samples to file
                         for (i in 0 until read) {
-                            outputStream.write(audioBuffer[i].toByte())
-                            outputStream.write((audioBuffer[i].toInt() shr 8).toByte())
+                            val bytes = ByteArray(2)
+                            bytes[0] = audioBuffer[i].toByte()
+                            bytes[1] = (audioBuffer[i].toInt() shr 8).toByte()
+                            outputStream.write(bytes)
                         }
                         samplesRead += read
                     }
