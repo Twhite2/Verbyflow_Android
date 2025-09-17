@@ -3,6 +3,7 @@ package com.example.verbyflow.domain.usecase.call
 import com.example.verbyflow.domain.repository.SpeechRepository
 import com.example.verbyflow.domain.repository.UserRepository
 import com.example.verbyflow.domain.repository.VoiceEmbeddingRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 
@@ -15,6 +16,7 @@ class ProcessSpeechUseCase @Inject constructor(
     private val userRepository: UserRepository,
     private val voiceEmbeddingRepository: VoiceEmbeddingRepository
 ) {
+    @OptIn(ExperimentalCoroutinesApi::class)
     suspend operator fun invoke(targetLanguage: String): Flow<ProcessingResult> {
         val user = userRepository.getCurrentUser() ?: throw IllegalStateException("No user found")
         val sourceLanguage = user.preferredLanguage

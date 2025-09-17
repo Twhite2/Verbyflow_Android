@@ -70,14 +70,14 @@ android {
 // Protobuf configuration for gRPC
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:${libs.versions.protobuf.get()}"
+        artifact = "com.google.protobuf:protoc:3.21.12"
     }
     plugins {
         create("grpc") {
-            artifact = "io.grpc:protoc-gen-grpc-java:${libs.versions.grpc.get()}"
+            artifact = "io.grpc:protoc-gen-grpc-java:1.56.1"
         }
         create("grpckt") {
-            artifact = "io.grpc:protoc-gen-grpc-kotlin:${libs.versions.grpcKotlin.get()}:jdk8@jar"
+            artifact = "io.grpc:protoc-gen-grpc-kotlin:1.3.0:jdk8@jar"
         }
     }
     generateProtoTasks {
@@ -87,16 +87,13 @@ protobuf {
                 create("grpckt")
             }
             task.builtins {
-                // Generate both Java and Kotlin classes
-                create("java") {
-                    option("lite")
-                }
-                create("kotlin") {
-                    option("lite")
-                }
+                create("java")
+                create("kotlin")
             }
         }
     }
+    // Set proto location to avoid collisions
+    generatedFilesBaseDir = "$projectDir/build/generated/source/proto"
 }
 
 dependencies {
@@ -135,13 +132,19 @@ dependencies {
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
+    // Add explicit dependency on JavaPoet to resolve Hilt issue
+    kapt("com.squareup:javapoet:1.13.0")
     
-    // gRPC
-    implementation(libs.grpc.okhttp)
-    implementation(libs.grpc.protobuf)
-    implementation(libs.grpc.stub)
-    implementation(libs.grpc.kotlin.stub)
-    implementation(libs.protobuf.kotlin)
+    // gRPC and Protobuf
+    implementation("io.grpc:grpc-okhttp:1.56.1")
+    implementation("io.grpc:grpc-stub:1.56.1")
+    implementation("io.grpc:grpc-protobuf:1.56.1")
+    implementation("javax.annotation:javax.annotation-api:1.3.2")
+    implementation("com.google.protobuf:protobuf-java:3.21.12")
+    
+    // Kotlin implementations
+    implementation("io.grpc:grpc-kotlin-stub:1.3.0")
+    implementation("com.google.protobuf:protobuf-kotlin:3.21.12")
     
     // DataStore
     implementation(libs.datastore.preferences)

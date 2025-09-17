@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 option java_package = "com.example.verbyflow.proto";
+option java_outer_classname = "Signaling";
 option java_multiple_files = true;
 
 // Signaling service for WebRTC connection setup
