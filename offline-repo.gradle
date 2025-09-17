@@ -1,0 +1,8 @@
+// This is a fallback configuration for when online repositories are unreachable
+// To use this, place any necessary JARs in the 'repo' folder
+
+repositories {
+    maven {
+        url uri('repo')
+    }
+}

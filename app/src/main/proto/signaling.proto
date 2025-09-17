@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+option java_package = "com.example.verbyflow.proto";
+option java_multiple_files = true;
+
+// Signaling service for WebRTC connection setup
+service SignalingService {
+  // Send signaling message to another user
+  rpc SendSignalingMessage(SignalingMessage) returns (SendResponse);
+  
+  // Listen for signaling messages directed to the current user
+  rpc ListenForMessages(UserIdentifier) returns (stream SignalingMessage);
+}
+
+// Message for WebRTC signaling (offer, answer, ICE candidates)
+message SignalingMessage {
+  string from_user_id = 1;
+  string to_user_id = 2;
+  string session_id = 3;
+  int64 timestamp = 4;
+  
+  oneof message {
+    SDPMessage sdp = 5;
+    ICECandidate ice_candidate = 6;
+    EndSession end_session = 7;
+  }
+}
+
+// SDP offer or answer
+message SDPMessage {
+  enum SDPType {
+    OFFER = 0;
+    ANSWER = 1;
+  }
+  SDPType type = 1;
+  string sdp = 2;
+}
+
+// ICE candidate
+message ICECandidate {
+  string sdp_mid = 1;
+  int32 sdp_m_line_index = 2;
+  string candidate = 3;
+}
+
+// End session message
+message EndSession {
+  string reason = 1;
+}
+
+// Response for send operations
+message SendResponse {
+  bool success = 1;
+  string error_message = 2;
+}
+
+// Identifier for a user
+message UserIdentifier {
+  string user_id = 1;
+}
+
+// Voice embedding service for storing and retrieving voice embeddings
+service VoiceEmbeddingService {
+  // Upload voice embedding to server
+  rpc UploadVoiceEmbedding(VoiceEmbeddingData) returns (UploadResponse);
+  
+  // Get voice embedding from server
+  rpc GetVoiceEmbedding(EmbeddingRequest) returns (VoiceEmbeddingData);
+}
+
+// Voice embedding data
+message VoiceEmbeddingData {
+  string user_id = 1;
+  string embedding_id = 2;
+  bytes embedding_data = 3;
+  int64 created_at = 4;
+}
+
+// Request for getting embedding
+message EmbeddingRequest {
+  string user_id = 1;
+  string embedding_id = 2;
+}
+
+// Response for upload operations
+message UploadResponse {
+  bool success = 1;
+  string embedding_id = 2;
+  string error_message = 3;
+}

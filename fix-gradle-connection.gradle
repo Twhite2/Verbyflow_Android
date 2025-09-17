@@ -1,0 +1,23 @@
+// This script helps resolve SSL/TLS connection issues with Gradle repositories
+// Include this in settings.gradle if you continue to have connection issues
+
+gradle.projectsLoaded {
+    rootProject.allprojects {
+        buildscript {
+            repositories.all {
+                def url = it.url.toString()
+                if (url.contains('repo.maven.apache.org') || url.contains('repo1.maven.org')) {
+                    println "Repository ${it.name} at ${url} using relaxed SSL verification"
+                    it.allowInsecureProtocol = true
+                }
+            }
+        }
+        repositories.all {
+            def url = it.url.toString()
+            if (url.contains('repo.maven.apache.org') || url.contains('repo1.maven.org')) {
+                println "Repository ${it.name} at ${url} using relaxed SSL verification"
+                it.allowInsecureProtocol = true
+            }
+        }
+    }
+}

@@ -1,0 +1,10 @@
+// Special repository configuration for WebRTC
+
+repositories {
+    maven {
+        url "https://google.bintray.com/webrtc"
+    }
+    maven {
+        url "https://jitpack.io"
+    }
+}
