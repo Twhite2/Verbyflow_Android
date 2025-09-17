@@ -1,10 +1,41 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
     alias(libs.plugins.protobuf)
-    kotlin("kapt")
+    alias(libs.plugins.ksp) // Using KSP exclusively for all annotation processing
+}
+
+// Use a straightforward approach for JVM configuration
+
+// Force all Kotlin compile tasks to use Java 17
+tasks.withType<KotlinCompile>().configureEach {
+    kotlinOptions.jvmTarget = "17"
+}
+
+// Using KSP for all annotation processing (more efficient than kapt)
+
+// Force specific versions for compatibility with Kotlin 1.8.22 and Hilt 2.44.2
+configurations.all {
+    resolutionStrategy.eachDependency {
+        // Force a consistent version of JavaPoet
+        if (requested.group == "com.squareup" && requested.name == "javapoet") {
+            useVersion("1.13.0")
+        }
+        
+        // Force consistent versions of Dagger/Hilt
+        if (requested.group == "com.google.dagger") {
+            useVersion(libs.versions.hilt.get())
+        }
+        
+        // Make sure we use a compatible Kotlin metadata version
+        if (requested.group == "org.jetbrains.kotlin" && requested.name.startsWith("kotlin-")) {
+            useVersion(libs.versions.kotlin.get())
+        }
+    }
 }
 
 android {
@@ -44,18 +75,54 @@ android {
     }
     
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        // We're using Java 17 for the project
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
     
     kotlinOptions {
-        jvmTarget = "11"
+        // Target Java 17 bytecode
+        jvmTarget = "17"
+        freeCompilerArgs += listOf(
+            "-opt-in=kotlin.RequiresOptIn",
+            "-Xskip-prerelease-check",
+            "-Xjvm-default=all"  // For better compatibility with older code
+        )
+    }
+    
+    // Additional Kotlin/Java settings are configured above
+    
+    // Configure KSP for Hilt 2.51+ and Room
+    ksp {
+        // Room options
+        arg("room.generateKotlin", "true")  // Generate Room code in Kotlin
+        arg("room.schemaLocation", "$projectDir/schemas") // Store Room schema
+        
+        // Basic KSP settings
+        arg("ksp.incremental", "true")
+    }
+    
+    // No need for module access setup since KSP doesn't require JDK module access
+    
+    // Configure JavaCompile tasks with standard memory settings
+    tasks.withType<JavaCompile>().configureEach {
+        // Increase memory for Java compilation
+        options.forkOptions.jvmArgs = listOf(
+            "-Xmx1g"
+        )
     }
     
     buildFeatures {
         compose = true
         buildConfig = true
     }
+    
+    composeOptions {
+        kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get()
+    }
+    
+    // Direct task configuration handled by the project.afterEvaluate block
     
     packaging {
         resources {
@@ -66,6 +133,8 @@ android {
         }
     }
 }
+
+// JVM targets are configured at the top of the file
 
 // Protobuf configuration for gRPC
 protobuf {
@@ -93,10 +162,14 @@ protobuf {
         }
     }
     // Set proto location to avoid collisions
+    @Suppress("DEPRECATION")
     generatedFilesBaseDir = "$projectDir/build/generated/source/proto"
 }
 
 dependencies {
+    // Enable desugaring for JDK APIs on older Android versions
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+    
     // AndroidX & Compose
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -106,9 +179,10 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
-    
-    // Navigation
-    implementation(libs.androidx.navigation.compose)
+    // Compose compiler compatible with Kotlin 1.8.22
+    implementation(libs.androidx.compose.compiler)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
     
     // WebRTC - using Infobip's version which is available in Maven Central
     implementation(libs.webrtc)
@@ -128,12 +202,18 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
     
-    // Hilt
+    // Hilt dependencies with KSP (modern annotation processing)
     implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
+    ksp(libs.hilt.compiler) // Using KSP for Hilt 2.51+
     implementation(libs.hilt.navigation.compose)
-    // Add explicit dependency on JavaPoet to resolve Hilt issue
-    kapt("com.squareup:javapoet:1.13.0")
+    
+    // Add explicit KSP API dependency to ensure correct API is used
+    compileOnly("com.google.devtools.ksp:symbol-processing-api:${libs.versions.ksp.get()}")
+    
+    // Room Database with KSP support
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler) // Using KSP for Room
     
     // gRPC and Protobuf
     implementation("io.grpc:grpc-okhttp:1.56.1")

@@ -1,0 +1,20 @@
+// Simple JVM configuration script for Java compilation
+// This sets the Java and Kotlin compilation targets to Java 11 bytecode
+
+// Set Java compilation to target Java 11
+tasks.withType(JavaCompile) {
+    options.release = 11
+}
+
+// Handle Kotlin and kapt compilation targets through project properties
+project.ext.set('kotlin.jvmTarget', '11')
+
+// For all Kotlin tasks
+afterEvaluate {
+    // Apply to all tasks with kotlinOptions
+    tasks.all { task ->
+        if (task.hasProperty('kotlinOptions')) {
+            task.kotlinOptions.jvmTarget = "11"
+        }
+    }
+}

@@ -210,7 +210,7 @@ fun VoiceRecordingSection(
         ) {
             // Recording progress indicator
             CircularProgressIndicator(
-                progress = { recordingProgress },
+                progress = recordingProgress, // Fixed parameter - removed lambda
                 modifier = Modifier.fillMaxSize(),
                 strokeWidth = 8.dp
             )
